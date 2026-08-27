@@ -30,7 +30,7 @@ An end-to-end Python command-line utility for real-time financial data extractio
 
 
 ## video demo
-[![Play Video](https://img.shields.io/badge/▶%20Play-Video-success?style=for-the-badge)]()
+[![Play Video](https://img.shields.io/badge/▶%20Play-Video-success?style=for-the-badge)](https://drive.google.com/file/d/1AdMGc7mRcJA3VYFVlFSHXQrfw0mD7E2l/view?usp=sharing)
 ---
 
 ## 🚀 Getting Started
