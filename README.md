@@ -28,6 +28,9 @@ An end-to-end Python command-line utility for real-time financial data extractio
 | **Data Engine** | `pandas` | Time-series processing & rolling window metrics |
 | **Visualization** | `matplotlib` | Multi-line charting & graphic rendering |
 
+
+## video demo
+[![Play Video](https://img.shields.io/badge/▶%20Play-Video-success?style=for-the-badge)]()
 ---
 
 ## 🚀 Getting Started
