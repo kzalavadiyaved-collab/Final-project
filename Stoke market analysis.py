@@ -1,146 +1,103 @@
-import yfinance as yf
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+import streamlit as st
+import yfinance as yf
+
+st.set_page_config(page_title="Stock Market Analysis", layout="wide")
+st.title("📈 Stock Market Analysis App")
+
+# Sidebar - Inputs
+st.sidebar.header("User Options")
+symbol = st.sidebar.text_input(
+    "Stock Ticker Symbol", value="AAPL", help="Example: AAPL, TSLA, RELIANCE.NS"
+)
+start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2023-01-01"))
+end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("today"))
+
+# Download Data Functionality
+@st.cache_data
+def load_data(ticker, start, end):
+    data = yf.download(ticker, start=start, end=end)
+    return data
 
 
-class StockMarketAnalysis:
+data = load_data(symbol, start_date, end_date)
 
-    def __init__(self):
-        self.data = None
-        self.symbol = None
+if data.empty:
+    st.error("No data found! Please check the symbol or dates.")
+else:
+    # Sidebar Navigation Menu
+    menu = [
+        "1. Download Stock Data",
+        "2. Show Data",
+        "3. Closing Price Graph",
+        "4. Moving Average Chart",
+        "5. Volume Chart",
+        "6. Stock Summary",
+    ]
+    choice = st.sidebar.selectbox("Select Analysis Option", menu)
 
+    # 1. Download Option
+    if choice == "1. Download Stock Data":
+        st.subheader(f"Raw Data for {symbol}")
+        st.success("Data loaded successfully!")
+        st.dataframe(data, use_container_width=True)
 
-    
-    def download_data(self):
-        self.symbol = input("Enter stock symbol (Example: AAPL, TSLA, RELIANCE.NS): ")
-        start = input("Enter start date (YYYY-MM-DD): ")
-        end = input("Enter end date (YYYY-MM-DD): ")
+    # 2. Show Data
+    elif choice == "2. Show Data":
+        st.subheader("Data Preview (First 10 Rows)")
+        st.dataframe(data.head(10), use_container_width=True)
 
-        try:
-            self.data = yf.download(self.symbol, start=start, end=end)
+    # 3. Closing Price Graph
+    elif choice == "3. Closing Price Graph":
+        st.subheader(f"{symbol} - Closing Price")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(data["Close"], label="Close Price", color="blue")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Price")
+        ax.legend()
+        st.pyplot(fig)
 
-            if self.data.empty:
-                print("No data found! Check symbol or dates.")
-            else:
-                print("Data downloaded successfully!")
+    # 4. Moving Average
+    elif choice == "4. Moving Average Chart":
+        st.subheader("20-Day & 50-Day Moving Average")
+        data_ma = data.copy()
+        data_ma["MA20"] = data_ma["Close"].rolling(20).mean()
+        data_ma["MA50"] = data_ma["Close"].rolling(50).mean()
 
-        except Exception as e:
-            print("Error while downloading data:", e)
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(data_ma["Close"], label="Close Price", alpha=0.5)
+        ax.plot(data_ma["MA20"], label="20 Day MA", color="orange")
+        ax.plot(data_ma["MA50"], label="50 Day MA", color="green")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Price")
+        ax.legend()
+        st.pyplot(fig)
 
-    
-    def show_data(self):
-        if self.data is None or self.data.empty:
-            print("Please download data first.")
-            return
+    # 5. Volume Plot
+    elif choice == "5. Volume Chart":
+        st.subheader(f"{symbol} - Trading Volume")
+        if "Volume" in data.columns:
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.plot(data.index, data["Volume"], label="Volume", color="purple")
+            ax.set_xlabel("Date")
+            ax.set_ylabel("Volume")
+            ax.legend()
+            st.pyplot(fig)
+        else:
+            st.warning("Volume data not available.")
 
-        print("\n--- STOCK DATA ---")
-        print(self.data.head())
+    # 6. Stock Summary
+    elif choice == "6. Stock Summary":
+        st.subheader("Stock Key Metrics")
+        col1, col2, col3, col4 = st.columns(4)
 
+        high_val = float(data["High"].max())
+        low_val = float(data["Low"].min())
+        avg_close = float(data["Close"].mean())
+        tot_vol = int(data["Volume"].sum())
 
-    
-    def close_price_plot(self):
-        if self.data is None or self.data.empty:
-            print("Download data first.")
-            return
-
-        plt.figure(figsize=(10,5))
-        plt.plot(self.data["Close"], label="Close Price")
-        plt.title(f"{self.symbol} - Closing Price")
-        plt.xlabel("Date")
-        plt.ylabel("Price")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-
-
-    
-    def moving_average(self):
-        if self.data is None or self.data.empty:
-            print("Download data first.")
-            return
-
-        self.data["MA20"] = self.data["Close"].rolling(20).mean()
-        self.data["MA50"] = self.data["Close"].rolling(50).mean()
-
-        plt.figure(figsize=(10,5))
-        plt.plot(self.data["Close"], label="Close Price")
-        plt.plot(self.data["MA20"], label="20 Day MA")
-        plt.plot(self.data["MA50"], label="50 Day MA")
-        plt.title("Moving Average Analysis")
-        plt.xlabel("Date")
-        plt.ylabel("Price")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-
-
-    
-    def volume_plot(self):
-        if self.data is None or self.data.empty:
-            print("Download data first.")
-            return
-
-        if "Volume" not in self.data.columns:
-            print("Volume data not available for this stock.")
-            return
-
-        plt.figure(figsize=(10,5))
-        plt.plot(self.data.index, self.data["Volume"], label="Volume")
-        plt.title(f"{self.symbol} - Trading Volume")
-        plt.xlabel("Date")
-        plt.ylabel("Volume")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-
-
-    
-    def stock_summary(self):
-        if self.data is None or self.data.empty:
-            print("Download data first.")
-            return
-
-        print("\n--- STOCK SUMMARY ---")
-        print("Highest Price:", round(self.data["High"].max(), 2))
-        print("Lowest Price:", round(self.data["Low"].min(), 2))
-        print("Average Closing Price:", round(self.data["Close"].mean(), 2))
-        print("Total Volume:", int(self.data["Volume"].sum()))
-
-
-    
-    def menu(self):
-        while True:
-            print("\n====== STOCK MARKET ANALYSIS MENU ======")
-            print("1. Download Stock Data")
-            print("2. Show Data")
-            print("3. Closing Price Graph")
-            print("4. Moving Average Chart")
-            print("5. Volume Chart")
-            print("6. Stock Summary")
-            print("7. Exit")
-
-            choice = input("Enter your choice: ")
-
-            if choice == "1":
-                self.download_data()
-            elif choice == "2":
-                self.show_data()
-            elif choice == "3":
-                self.close_price_plot()
-            elif choice == "4":
-                self.moving_average()
-            elif choice == "5":
-                self.volume_plot()
-            elif choice == "6":
-                self.stock_summary()
-            elif choice == "7":
-                print("Thank you for using Stock Market Analyzer!")
-                break
-            else:
-                print("Invalid choice! Try again.")
-
-
-
-if __name__ == "__main__":
-    app = StockMarketAnalysis()
-    app.menu()
+        col1.metric("Highest Price", f"${high_val:.2f}")
+        col2.metric("Lowest Price", f"${low_val:.2f}")
+        col3.metric("Avg Closing Price", f"${avg_close:.2f}")
+        col4.metric("Total Volume", f"{tot_vol:,}")
